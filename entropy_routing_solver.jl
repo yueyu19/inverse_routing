@@ -8,13 +8,13 @@ Inputs:
     - p, number of players
     - E, incidence matrix, where (n, m) = size(E)
     - s, source-sink vector
-    - b, 
-    - C,
+    - b, where b_i is the nominal price of each link for all i ∈ [p] players
+    - C, additional cost adjustment introduced by other players
 - λ, entropy weight
 
 Returns:
 - x: mixed eq strategies for each player on space of links
-- v: ?
+- v: value vector/function associated to all nodes
 """
 function solve_entropy_routing(pa, λ)
 
@@ -61,3 +61,4 @@ calling solve_entropy_routing()
 """
 x, v = solve_entropy_routing(pa(), 0.01)
 @show x
+@show size(x)
