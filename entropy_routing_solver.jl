@@ -60,5 +60,5 @@ end
 calling solve_entropy_routing()
 """
 x, v = solve_entropy_routing(pa(), 0.01)
-@show x
-@show size(x)
+# @show x
+# @show v
