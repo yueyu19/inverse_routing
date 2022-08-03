@@ -65,8 +65,8 @@ function approx_proj_grad(p, E, s, λ, α, ϵ, ρ)
         ∇ψ_x = x - x̂ # 18x1
 
         # compute ∇̂ψ_b, ∇̂ψ_C
-        # ∇̂ψ_b = 1/λ * [D' zeros(p*m, p*n)] * pinv(J)' * [∇ψ_x; zeros(p*n)]
-        ∇̂ψ_C = 1/λ * [D' zeros(p*m, p*n)] * pinv(J)' * [∇ψ_x; zeros(p*n)] * x' # 18x1
+        # ∇̂ψ_b = - 1/λ * [D' zeros(p*m, p*n)] * pinv(J)' * [∇ψ_x; zeros(p*n)]
+        ∇̂ψ_C = - 1/λ * [D' zeros(p*m, p*n)] * pinv(J)' * [∇ψ_x; zeros(p*n)] * x' # 18x1
         @show norm(∇̂ψ_C)
 
         # update b_plus, C_plus
@@ -87,11 +87,11 @@ p = 3
 E = [1 -1  0  0  1 -1; -1  1  1 -1  0  0; 0  0 -1  1 -1 1]
 s = vec([1 0 -1; -1 1 0; 0 -1 1])
 λ = 0.01
-α = 1
+α = 0.01
 ϵ = 0.01
-ρ = 10
+ρ = 1
 
 # calling method
 x, b, C, ψ_vals = approx_proj_grad(p, E, s, λ, α, ϵ, ρ)
 plot(ψ_vals)
-savefig("ψ_vals_plots.png")
+savefig("ψ_vals_plots_λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ).png")
