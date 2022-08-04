@@ -4,10 +4,10 @@ using Plots
 
 # helper function: projection onto D
 function proj_D(C, ρ)
-    s = real(eigvals(C))
-    U = real(eigvecs(C))
+    s = eigvals(0.5 * (C + C'))
+    U = eigvecs(0.5 * (C + C'))
     A = 1/2 * (C - C') + U * diagm(vec(max.(s,zeros(length(s))))) * U'
-    return ρ / max(ρ, norm(A)) * A
+    return ρ / max.(ρ, norm(A)) * A
 end
 
 """
@@ -17,27 +17,28 @@ Inputs:
 - λ, entropy weight
 - α, step size
 - ϵ, stopping tolerance
+- ρ
 
 Returns:
 - x: mixed eq strategies for each player on space of links
 - b
 - C
 """
-function approx_proj_grad(p, E, s, λ, α, ϵ)
+function approx_proj_grad(p, E, s, λ, α, ϵ, ρ)
     n, m = size(E)
     x̂ = [0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0] # 18x1
 
     # initiate b, b_plus, C, C_plus
     b = zeros(p*m)
-    b_plus = 2*ϵ*ones(p*m)
-    C = zeros(p*m, p*m)
-    C_plus = 2*ϵ*I(p*m)
+    b_plus = 0.1*ones(p*m)
+    C = 0.1*I(p*m) 
+    C_plus = zeros(p*m, p*m)
 
     ψ_vals = Float64[]
 
     println("Starting approx proj grad...")
 
-    for i in 1:50
+    for i in 1:100
         # update b, C
         b = b_plus
         C = C_plus
@@ -53,7 +54,7 @@ function approx_proj_grad(p, E, s, λ, α, ϵ)
             (; p=pa_p, E=pa_E, n=pa_n, m=pa_m, s=pa_s, b=pa_b, C=pa_C)
         end
         x, v = solve_entropy_routing(pa(), λ)
-        # @show 0.5 * norm(x-x̂)^2
+        @show 0.5 * norm(x-x̂)^2
         push!(ψ_vals, 0.5 * norm(x-x̂)^2)
 
         # compute D, J 
@@ -64,12 +65,13 @@ function approx_proj_grad(p, E, s, λ, α, ϵ)
         ∇ψ_x = x - x̂ # 18x1
 
         # compute ∇̂ψ_b, ∇̂ψ_C
-        # ∇̂ψ_b = 1/λ * [D' zeros(p*m, p*n)] * pinv(J)' * [∇ψ_x; zeros(p*n)]
-        ∇̂ψ_C = 1/λ * [D' zeros(p*m, p*n)] * pinv(J)' * [∇ψ_x; zeros(p*n)] * x' # 18x1
+        # ∇̂ψ_b = - 1/λ * [D' zeros(p*m, p*n)] * pinv(J)' * [∇ψ_x; zeros(p*n)]
+        ∇̂ψ_C = - 1/λ * [D' zeros(p*m, p*n)] * pinv(J)' * [∇ψ_x; zeros(p*n)] * x' # 18x1
+        @show norm(∇̂ψ_C)
 
         # update b_plus, C_plus
         # b_plus = proj_B(b - α * ∇̂ψ_b, 0.1)
-        C_plus = proj_D(C - α * ∇̂ψ_C, 0.1)  #ρ=0.1
+        C_plus = proj_D(C - α * ∇̂ψ_C, ρ)
     end
     println("Finished.")
 
@@ -85,10 +87,11 @@ p = 3
 E = [1 -1  0  0  1 -1; -1  1  1 -1  0  0; 0  0 -1  1 -1 1]
 s = vec([1 0 -1; -1 1 0; 0 -1 1])
 λ = 0.01
-α = 0.1
+α = 0.01
 ϵ = 0.01
+ρ = 10
 
 # calling method
-x, b, C, ψ_vals = approx_proj_grad(p, E, s, λ, α, ϵ)
+x, b, C, ψ_vals = approx_proj_grad(p, E, s, λ, α, ϵ, ρ)
 plot(ψ_vals)
-savefig("ψ_vals_plots.png")
+savefig("ψ_vals_plots_λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ).png")
