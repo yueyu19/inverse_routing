@@ -30,8 +30,8 @@ function approx_proj_grad(p, E, s, λ, α, ϵ, ρ)
 
     # initiate b, b_plus, C, C_plus
     b = zeros(p*m)
-    b_plus = 2*0.1*ones(p*m)
-    C = 2*0.1*I(p*m) 
+    b_plus = 0.1*ones(p*m)
+    C = 0.1*I(p*m) 
     C_plus = zeros(p*m, p*m)
 
     ψ_vals = Float64[]
@@ -89,7 +89,7 @@ s = vec([1 0 -1; -1 1 0; 0 -1 1])
 λ = 0.01
 α = 0.01
 ϵ = 0.01
-ρ = 1
+ρ = 10
 
 # calling method
 x, b, C, ψ_vals = approx_proj_grad(p, E, s, λ, α, ϵ, ρ)
