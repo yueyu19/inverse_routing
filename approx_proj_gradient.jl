@@ -45,7 +45,9 @@ Returns:
 """
 function approx_proj_grad(p, E, s, λ, α, ϵ, ρ, max_iter)
     n, m = size(E)
-    x̂ = [0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0] # 18x1
+    x̂ = [0, 0, 0, 1, 1, 0, 
+        0, 1, 0, 0, 1, 0, 
+        0, 1, 0, 1, 0, 0] # 18x1
     
     # initiate b, b_plus, C, C_plus
     b = zeros(p*m)
@@ -110,9 +112,10 @@ end
 # create routing game instance directly 
 # p = 3
 # E = [1 -1  0  0  1 -1; -1  1  1 -1  0  0; 0  0 -1  1 -1 1]
+# @show E
 # s = vec([1 0 -1; -1 1 0; 0 -1 1])
 
-# create routing network
+# # create routing network
 game_name = "fully_connected"
 edge_dict = Dict(1 => (1,2), 2 => (2,1), 3 => (2,3), 4 => (3,2), 5 => (1,3), 6 => (3,1))
 g = SimpleDiGraph(3)
@@ -130,17 +133,23 @@ s = s = vec([1 0 -1; -1 1 0; 0 -1 1])
 α = 0.01
 ϵ = 0.01
 ρ = args["rho"]
-max_iter = 100
+max_iter = 10
 
 # calling method
-x, x_init, b, C, ψ_vals = approx_proj_grad(p, E, s, λ, α, ϵ, ρ, max_iter)
-plot(ψ_vals, xlabel="iter", ylabel="ψ(x)")
-savefig("ψ_vals_plots_λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ).png")
-@show ψ_vals[end]
+# x, x_init, b, C, ψ_vals = approx_proj_grad(p, E, s, λ, α, ϵ, ρ, max_iter)
+# plot(ψ_vals, xlabel="iter", ylabel="ψ(x)")
+# savefig("ψ_vals_plots_λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ).png")
+# @show ψ_vals[end]
 
 # plot unlabeled
 function plot_unlabeled(game_name, g)
-    edgelabel_dict = Dict((1,2) => "1", (2,1) => "2", (2,3) => "3", (3,2) => "4", (1,3) => "5", (3,1) => "6")
+    # generating edgelabel_dict
+    edgelabel_dict = Dict{Tuple{Int64, Int64}, String}()
+    for i in 1:ne(g)
+        col = -Matrix(incidence_matrix(g))[:,i]
+        edgelabel_dict[(findall(x->x==1, col)[1], findall(x->x==-1, col)[1])] =string(i)
+    end
+    # plotting directed graph with node and link labelings
     graphplot(g, fontsize=11,
               names=1:nv(g), nodeshape=:circle, nodesize=0.2,
               edgelabel=edgelabel_dict)
@@ -164,6 +173,9 @@ function plot_labeled(game_name, g, x, player)
     savefig("($game_name)_labeled_player_$player.png")
 end
 
-# plot_unlabeled(game_name, g)
+plot_unlabeled(game_name, g)
 # plot_labeled(game_name*"_x_init", g, x_init, 2)
 # plot_labeled(game_name*"_x", g, x, 2)
+
+
+#todo: 5x5 grid world like directed graph, p=4, s=collision source-sink Vector
