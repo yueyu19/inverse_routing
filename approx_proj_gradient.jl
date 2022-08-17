@@ -259,7 +259,7 @@ function grid_graph5()
 end
 
 # instantiate a routing game (p, E, s) with desired Nash sol x̂
-game_name, g, p, E, s, x̂ = grid_graph3()
+game_name, g, p, E, s, x̂ = grid_graph5()
 
 # assign parameters
 λ = 0.01
@@ -274,7 +274,7 @@ x, x_init, b, C, ψ_vals = approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_it
 
 """ SAVING RESULT """
 # create an individual folder under results/
-dir = "results/$(game_name)_λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ)"; mkpath(dir) # mkdir if not exists
+dir = "results/$(game_name)/λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ)"; mkpath(dir) # mkdir if not exists
 println("saving plot and output to '$dir'")
 
 # plot and save
