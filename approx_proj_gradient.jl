@@ -16,6 +16,18 @@ function parse_commandline()
             help = "rho"
             arg_type = Float64
             default = 1.0
+        "--lambda"
+            help = "entropy reg term"
+            arg_type = Float64
+            default = 0.01
+        "--alpha"
+            help = "GD step size"
+            arg_type = Float64
+            default = 0.01
+        "--epsilon"
+            help = "convergence threshold"
+            arg_type = Float64
+            default = 0.01
     end
 
     return parse_args(s)
@@ -83,23 +95,45 @@ Returns:
 - b
 - C
 """
-function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter)
+function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter, scale_factor)
     n, m = size(E)
     
     # initiate b, b_plus, C, C_plus
+    # b = zeros(p*m) * scale_factor
+    # b_plus = 0.1*ones(p*m) * scale_factor
+    # C = 0.1*I(p*m) * scale_factor
+    # C_plus = zeros(p*m, p*m) *scale_factor
     b = zeros(p*m)
     b_plus = 0.1*ones(p*m)
-    C = 0.1*I(p*m) 
+    C = 0.1*I(p*m)
     C_plus = zeros(p*m, p*m)
 
-    ψ_vals = Float64[]
-    x_init = Vector{Float64}
-    x = Vector{Float64}
+    # λ *= scale_factor
+    # ρ *= scale_factor
+    # ϵ *= scale_factor
 
+    ψ_vals = Float64[]
+    # x_init = Vector{Float64}
+    # x = Vector{Float64}
+
+    # create parameters block and solve for x
+    function pa_init()
+        pa_p = p
+        pa_E = E
+        pa_n, pa_m = n, m
+        pa_s = s
+        pa_b = b_plus
+        pa_C = C_plus
+        (; p=pa_p, E=pa_E, n=pa_n, m=pa_m, s=pa_s, b=pa_b, C=pa_C)
+    end
+    x_init, v = solve_entropy_routing(pa_init(), λ)
+
+    x = x_init
+    
     println("Starting approx proj grad...")
 
     for i in 1:max_iter
-        if max(norm(b-b_plus), norm(C-C_plus)) <= ϵ
+        if max(norm(b-b_plus), norm(C-C_plus)) <= ϵ || 0.5 * norm(x-x̂)^2 <= ϵ
             break
         else
             # update b, C
@@ -117,8 +151,13 @@ function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter)
                 (; p=pa_p, E=pa_E, n=pa_n, m=pa_m, s=pa_s, b=pa_b, C=pa_C)
             end
             x, v = solve_entropy_routing(pa(), λ)
-            if i == 1; x_init = x; end # store initial x
-            push!(ψ_vals, 0.5 * norm(x-x̂)^2)
+            # if i == 1; x_init = x; end # store initial x
+            # ψ_val_at_x = 0.5 * norm(x-x̂)^2
+            # if ψ_val_at_x < ϵ
+            #     break
+            # else
+            #     push!(ψ_vals, ψ_val_at_x)
+            # end
 
             # compute D, J 
             D = diagm(vec(exp.(1/λ * (kron(I(p), E')*v-b-C*x) - ones(p*m, 1)))) # dim: 18x18
@@ -140,6 +179,8 @@ function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter)
 
     (;x = x,
       x_init = x_init,
+    #   b = b / scale_factor,
+    #   C = C / scale_factor,
       b = b,
       C = C,
       ψ_vals = ψ_vals)
@@ -239,20 +280,22 @@ function grid_graph5()
         end
     end
 
-    p = 4
+    p = 2
     E = -Matrix(incidence_matrix(g))
 
     s_p1 = zeros(25); s_p1[11] = 1; s_p1[15] = -1;
     s_p2 = -s_p1
-    s_p3 = zeros(25); s_p3[3] = 1; s_p3[23] = -1;
-    s_p4 = -s_p3
-    s = [s_p1; s_p2; s_p3; s_p4]
+    # s_p3 = zeros(25); s_p3[3] = 1; s_p3[23] = -1;
+    # s_p4 = -s_p3
+    s = [s_p1; s_p2]
+    # s = [s_p1; s_p2; s_p3; s_p4]
 
     p1 = zeros(80); p1[32] = p1[15] = p1[19] = p1[23] = p1[27] = p1[31] = 1;
     p2 = zeros(80); p2[49] = p2[66] = p2[62] = p2[58] = p2[54] = p2[50] = 1;
-    p3 = zeros(80); p3[7] = p3[11] = p3[28] = p3[46] = p3[64] = p3[77] = 1;
-    p4 = zeros(80); p4[74] = p4[70] = p4[53] = p4[35] = p4[17] = p4[4] = 1;
-    x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
+    # p3 = zeros(80); p3[7] = p3[11] = p3[28] = p3[46] = p3[64] = p3[77] = 1;
+    # p4 = zeros(80); p4[74] = p4[70] = p4[53] = p4[35] = p4[17] = p4[4] = 1;
+    x̂ = vec([p1; p2]) # dim: 24*2 x 1
+    # x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
 
     # plot_unlabeled(game_name, g)
     (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
@@ -262,19 +305,20 @@ end
 game_name, g, p, E, s, x̂ = grid_graph5()
 
 # assign parameters
-λ = 0.01
-α = 0.01
-ϵ = 0.01
+λ = args["lambda"]
+α = args["alpha"]
+ϵ = args["epsilon"]
 ρ = args["rho"]
 max_iter = 100
+scale_factor = 1
 
 # calling method
 println("----------- $(game_name)_λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ) -----------")
-x, x_init, b, C, ψ_vals = approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter)
+x, x_init, b, C, ψ_vals = approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter, scale_factor)
 
 """ SAVING RESULT """
 # create an individual folder under results/
-dir = "results/$(game_name)/λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ)"; mkpath(dir) # mkdir if not exists
+dir = "results/$(game_name)/$(game_name)_λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ)"; mkpath(dir) # mkdir if not exists
 println("saving plot and output to '$dir'")
 
 # plot and save
