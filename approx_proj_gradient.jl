@@ -82,13 +82,18 @@ function proj_D(C, ρ)
 end
 
 """
-Approximate projected gradient method
+Approximate projected gradient method (measuring function ψ(x)=1/2*||x-x̂||^2)
 Inputs:
-- ψ, measuring function, e.g. ψ(x)=1/2*||x-x̂||^2
+- p, number of players
+- E, incidence matrix
+- s, source-sink vector
+- x̂, desired Nash solution
 - λ, entropy weight
 - α, step size
 - ϵ, stopping tolerance
-- ρ
+- ρ, modification allowance
+- max_iter
+- scale_factor
 
 Returns:
 - x: mixed eq strategies for each player on space of links
@@ -152,12 +157,12 @@ function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter, scale_factor)
             end
             x, v = solve_entropy_routing(pa(), λ)
             # if i == 1; x_init = x; end # store initial x
-            # ψ_val_at_x = 0.5 * norm(x-x̂)^2
             # if ψ_val_at_x < ϵ
             #     break
             # else
             #     push!(ψ_vals, ψ_val_at_x)
             # end
+            push!(ψ_vals, 0.5 * norm(x-x̂)^2)
 
             # compute D, J 
             D = diagm(vec(exp.(1/λ * (kron(I(p), E')*v-b-C*x) - ones(p*m, 1)))) # dim: 18x18

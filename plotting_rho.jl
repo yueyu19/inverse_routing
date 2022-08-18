@@ -18,6 +18,6 @@ for ρ in rho_list
 end
 
 # plot and save rho graph in results/
-# println("saving rho paramter search plot in 'results/$(game_name)_rho_parameter_search.png'")
-# plot(rho_list, psi_end_list, xlabel="ρ", ylabel="ψ(x) convergence value")
-# savefig("results/$(game_name)/$(game_name)_rho_parameter_search.png")
+println("saving rho paramter search plot in 'results/$(game_name)_rho_parameter_search.png'")
+plot(rho_list, psi_end_list, xlabel="ρ", ylabel="ψ(x) convergence value")
+savefig("results/$(game_name)/$(game_name)_rho_parameter_search.png")
