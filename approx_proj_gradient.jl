@@ -100,28 +100,18 @@ Returns:
 - b
 - C
 """
-function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter, scale_factor)
+function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter)
     n, m = size(E)
     
     # initiate b, b_plus, C, C_plus
-    # b = zeros(p*m) * scale_factor
-    # b_plus = 0.1*ones(p*m) * scale_factor
-    # C = 0.1*I(p*m) * scale_factor
-    # C_plus = zeros(p*m, p*m) *scale_factor
     b = zeros(p*m)
     b_plus = 0.1*ones(p*m)
     C = 0.1*I(p*m)
     C_plus = zeros(p*m, p*m)
 
-    # λ *= scale_factor
-    # ρ *= scale_factor
-    # ϵ *= scale_factor
-
     ψ_vals = Float64[]
-    # x_init = Vector{Float64}
-    # x = Vector{Float64}
 
-    # create parameters block and solve for x
+    # create parameters block and solve for x_init
     function pa_init()
         pa_p = p
         pa_E = E
@@ -133,6 +123,7 @@ function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter, scale_factor)
     end
     x_init, v = solve_entropy_routing(pa_init(), λ)
 
+    # put x_init as placeholder for x
     x = x_init
     
     println("Starting approx proj grad...")
@@ -156,12 +147,6 @@ function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter, scale_factor)
                 (; p=pa_p, E=pa_E, n=pa_n, m=pa_m, s=pa_s, b=pa_b, C=pa_C)
             end
             x, v = solve_entropy_routing(pa(), λ)
-            # if i == 1; x_init = x; end # store initial x
-            # if ψ_val_at_x < ϵ
-            #     break
-            # else
-            #     push!(ψ_vals, ψ_val_at_x)
-            # end
             push!(ψ_vals, 0.5 * norm(x-x̂)^2)
 
             # compute D, J 
@@ -184,8 +169,6 @@ function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter, scale_factor)
 
     (;x = x,
       x_init = x_init,
-    #   b = b / scale_factor,
-    #   C = C / scale_factor,
       b = b,
       C = C,
       ψ_vals = ψ_vals)
@@ -315,11 +298,10 @@ game_name, g, p, E, s, x̂ = grid_graph5()
 ϵ = args["epsilon"]
 ρ = args["rho"]
 max_iter = 100
-scale_factor = 1
 
 # calling method
 println("----------- $(game_name)_λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ) -----------")
-x, x_init, b, C, ψ_vals = approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter, scale_factor)
+x, x_init, b, C, ψ_vals = approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter)
 
 """ SAVING RESULT """
 # create an individual folder under results/

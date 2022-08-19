@@ -39,19 +39,6 @@ function solve_entropy_routing(pa, λ)
         # compute D, J 
         D = diagm(vec(exp.(1/λ * (kron(I(pa.p), pa.E')*xi[pa.p*pa.m+1:end] - pa.b - pa.C*xi[1:pa.p*pa.m]) - ones(pa.p*pa.m, 1)))) # dim: 18x18
         
-        # for i in 1:pa.p*pa.m, j in 1:pa.p*pa.m
-        #     J[i, j] = I(pa.p*pa.m)[i,j] + (1/λ*D*pa.C)[i,j]
-        # end
-        # for i in 1:pa.p*pa.m, j in pa.p*pa.m+1:pa.p(pa.m+pa.n)
-        #     J[i, j] = 1/λ*D*kron(I(pa.p), pa.E')[i,j]
-        # end
-        # for i in pa.p*pa.m+1:pa.p(pa.m+pa.n), j in 1:pa.p*pa.m
-        #     J[i, j] = kron(-I(pa.p), pa.E)[i,j]
-        # end
-        # for i in pa.p*pa.m+1:pa.p(pa.m+pa.n), j in pa.p*pa.m+1:pa.p(pa.m+pa.n)
-        #     J[i, j] = 0
-        # end
-
         J = [I(pa.p*pa.m)+1/λ*D*pa.C 1/λ*D*kron(I(pa.p), pa.E'); kron(-I(pa.p), pa.E) zeros(pa.p*pa.n, pa.p*pa.n)] # dim: 27x27
         for i in 1:pa.p*(pa.m+pa.n), j in 1:pa.p*(pa.m+pa.n)
             H[i, j] = J[i, j]
