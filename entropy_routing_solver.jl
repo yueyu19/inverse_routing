@@ -18,6 +18,10 @@ Returns:
 """
 function solve_entropy_routing(pa, λ)
     println("calling solve_entropy_routing...")
+
+    # R = 1/λ * (pa.p * pa.m * maximum(pa.C) + maximum(pa.b))
+    # R = 0
+    # @show R
     function nash!(F, xi)
         # x = xi[1:pa.p*pa.m]
         # v = xi[pa.p*pa.m+1:end]
@@ -26,24 +30,26 @@ function solve_entropy_routing(pa, λ)
 
         for i in 1:pa.p*pa.m
             F[i] = xi[1:pa.p*pa.m][i] - exp(1/λ * ((kron(I(pa.p), pa.E') * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - ones(pa.p*pa.m,1)[i])
+            # F[i] = exp(-R) * xi[1:pa.p*pa.m][i] - exp(1/λ * ((kron(I(pa.p), pa.E') * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - (R+1) * ones(pa.p*pa.m,1)[i])
         end
         for j in 1:pa.p*pa.n
             F[pa.p*pa.m+j] = pa.s[j] - (kron(I(pa.p), pa.E) * xi[1:pa.p*pa.m])[j]
+            # F[pa.p*pa.m+j] = exp(-R) * (pa.s[j] - (kron(I(pa.p), pa.E) * xi[1:pa.p*pa.m])[j])
         end
     end
 
-    function j!(H, xi)
-        # x = xi[1:pa.p*pa.m]
-        # v = xi[pa.p*pa.m+1:end]
+    # function j!(H, xi)
+    #     # x = xi[1:pa.p*pa.m]
+    #     # v = xi[pa.p*pa.m+1:end]
 
-        # compute D, J 
-        D = diagm(vec(exp.(1/λ * (kron(I(pa.p), pa.E')*xi[pa.p*pa.m+1:end] - pa.b - pa.C*xi[1:pa.p*pa.m]) - ones(pa.p*pa.m, 1)))) # dim: 18x18
+    #     # compute D, J 
+    #     D = diagm(vec(exp.(1/λ * (kron(I(pa.p), pa.E')*xi[pa.p*pa.m+1:end] - pa.b - pa.C*xi[1:pa.p*pa.m]) - ones(pa.p*pa.m, 1)))) # dim: 18x18
         
-        J = [I(pa.p*pa.m)+1/λ*D*pa.C 1/λ*D*kron(I(pa.p), pa.E'); kron(-I(pa.p), pa.E) zeros(pa.p*pa.n, pa.p*pa.n)] # dim: 27x27
-        for i in 1:pa.p*(pa.m+pa.n), j in 1:pa.p*(pa.m+pa.n)
-            H[i, j] = J[i, j]
-        end
-    end
+    #     J = [I(pa.p*pa.m)+1/λ*D*pa.C 1/λ*D*kron(I(pa.p), pa.E'); kron(-I(pa.p), pa.E) zeros(pa.p*pa.n, pa.p*pa.n)] # dim: 27x27
+    #     for i in 1:pa.p*(pa.m+pa.n), j in 1:pa.p*(pa.m+pa.n)
+    #         H[i, j] = J[i, j]
+    #     end
+    # end
 
     x0 = 0.5.*ones(pa.p*pa.m, 1)
     v0 = 0.5.*ones(pa.p*pa.n, 1)

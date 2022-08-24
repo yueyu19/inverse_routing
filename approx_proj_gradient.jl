@@ -74,10 +74,17 @@ end
 
 
 # helper function: projection onto D
-function proj_D(C, ρ)
-    s = eigvals(0.5 * (C + C'))
-    U = eigvecs(0.5 * (C + C'))
-    A = 1/2 * (C - C') + U * diagm(vec(max.(s,zeros(length(s))))) * U'
+function proj_D(C, ρ, pa)
+    C1 = 0.5 * (C - C')
+    for n in 1:pa.p
+        C1[pa.m*(n-1)+1:pa.m*n, pa.m*(n-1)+1:pa.m*n] = zeros(pa.m, pa.m)
+    end
+    
+    C2 = 0.5 * (C + C')
+    s = eigvals(C2)
+    U = eigvecs(C2)
+    
+    A = real(C1 + U * diagm(vec(max.(s,zeros(length(s))))) * U')
     return ρ / max.(ρ, norm(A)) * A
 end
 
@@ -130,6 +137,10 @@ function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter)
 
     for i in 1:max_iter
         if max(norm(b-b_plus), norm(C-C_plus)) <= ϵ || 0.5 * norm(x-x̂)^2 <= ϵ
+            println("Converged.")
+            break
+        elseif i == max_iter
+            println("Reached max_iter of 15, break.")
             break
         else
             # update b, C
@@ -148,6 +159,7 @@ function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter)
             end
             x, v = solve_entropy_routing(pa(), λ)
             push!(ψ_vals, 0.5 * norm(x-x̂)^2)
+            @show 0.5 * norm(x-x̂)^2
 
             # compute D, J 
             D = diagm(vec(exp.(1/λ * (kron(I(p), E')*v-b-C*x) - ones(p*m, 1)))) # dim: 18x18
@@ -162,10 +174,10 @@ function approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter)
 
             # update b_plus, C_plus
             # b_plus = proj_B(b - α * ∇̂ψ_b, 0.1)
-            C_plus = proj_D(C - α * ∇̂ψ_C, ρ)
+            C_plus = proj_D(C - α * ∇̂ψ_C, ρ, pa())
         end
     end
-    println("Finished.")
+
 
     (;x = x,
       x_init = x_init,
@@ -211,8 +223,8 @@ function simple_graph()
     (;game_name=game_name, g=g, p=p, E=E, s=s)
 end
 
-function grid_graph3()
-    game_name = "grid_graph3"
+function grid_graph3_4_players()
+    game_name = "grid_graph3_4_players"
 
     row_num = 3
     col_num = 3
@@ -249,8 +261,8 @@ function grid_graph3()
     (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
 end
 
-function grid_graph5()
-    game_name = "grid_graph5"
+function grid_graph5_2_players()
+    game_name = "grid_graph5_2_players"
 
     row_num = 5
     col_num = 5
@@ -289,15 +301,53 @@ function grid_graph5()
     (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
 end
 
+function grid_graph5_4_players()
+    game_name = "grid_graph5_4_players"
+
+    row_num = 5
+    col_num = 5
+    g = SimpleDiGraph(row_num * col_num)
+    for i in 1:row_num
+        for j in 1:col_num-1
+        add_edge!(g, 5*(i-1)+j, 5*(i-1)+j+1)
+        add_edge!(g, 5*(i-1)+j+1, 5*(i-1)+j)
+        end
+    end
+    for j in 1:col_num
+        for i in 1:row_num-1
+            add_edge!(g, 5*(i-1)+j, 5*(i-1)+j+5)
+            add_edge!(g, 5*(i-1)+j+5, 5*(i-1)+j)
+        end
+    end
+
+    p = 4
+    E = -Matrix(incidence_matrix(g))
+
+    s_p1 = zeros(25); s_p1[11] = 1; s_p1[15] = -1;
+    s_p2 = -s_p1
+    s_p3 = zeros(25); s_p3[3] = 1; s_p3[23] = -1;
+    s_p4 = -s_p3
+    s = [s_p1; s_p2; s_p3; s_p4]
+
+    p1 = zeros(80); p1[32] = p1[15] = p1[19] = p1[23] = p1[27] = p1[31] = 1;
+    p2 = zeros(80); p2[49] = p2[66] = p2[62] = p2[58] = p2[54] = p2[50] = 1;
+    p3 = zeros(80); p3[7] = p3[11] = p3[28] = p3[46] = p3[64] = p3[77] = 1;
+    p4 = zeros(80); p4[74] = p4[70] = p4[53] = p4[35] = p4[17] = p4[4] = 1;
+    x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
+
+    # plot_unlabeled(game_name, g)
+    (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
+end
+
 # instantiate a routing game (p, E, s) with desired Nash sol x̂
-game_name, g, p, E, s, x̂ = grid_graph5()
+game_name, g, p, E, s, x̂ = grid_graph3_4_players()
 
 # assign parameters
 λ = args["lambda"]
 α = args["alpha"]
 ϵ = args["epsilon"]
 ρ = args["rho"]
-max_iter = 100
+max_iter = 15
 
 # calling method
 println("----------- $(game_name)_λ=($λ)_α=($α)_ϵ=($ϵ)_ρ=($ρ) -----------")
