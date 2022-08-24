@@ -39,7 +39,7 @@ for iter = 1:maxiter
         break
     end
     gPsi = Psi(x, xref, 'grad');
-    Cplus = projD (pa.C - alp*grad(x, v, gPsi, pa), rho);
+    Cplus = projD (pa.C - alp*grad(x, v, gPsi, pa), rho, pa);
     Psival(iter) = Psi(x, xref, 'fval');
 end
 
