@@ -22,17 +22,17 @@ function solve_entropy_routing(pa, λ)
     model = Model(Ipopt.Optimizer)
     set_silent(model)
 
-    @variable(model, x[1:pa.p*pa.m])
-    @variable(model, v[1:pa.p*pa.n])
+    @variable(model, 0 <= x[1:pa.p*pa.m] <= 1)
+    @variable(model, v[1:pa.p*(pa.n-1)])
 
     # x - exp.(1/λ * (kron(I(pa.p), pa.E') * v - pa.b - pa.C * x) - ones(pa.p*pa.m,1)) .== 0
     for i in 1:pa.p*pa.m
-        @NLconstraint(model, x[i] - exp(1/λ * ((kron(I(pa.p), pa.E') * v)[i] - pa.b[i] - (pa.C * x)[i]) - ones(pa.p*pa.m,1)[i]) == 0)
+        @NLconstraint(model, x[i] - exp(1/λ * ((pa.E_diag' * v)[i] - pa.b[i] - (pa.C * x)[i]) - ones(pa.p*pa.m,1)[i]) == 0)
     end
 
     # pa.s - kron(I(pa.p), pa.E) * x .== 0
-    for j in 1:pa.p*pa.n
-        @NLconstraint(model, pa.s[j] - (kron(I(pa.p), pa.E) * x)[j] == 0)
+    for j in 1:pa.p*(pa.n-1)
+        @NLconstraint(model, pa.s_reduced[j] - (pa.E_diag * x)[j] == 0)
     end
 
     # @NLobjective(model, Min, norm([x - exp.(1/λ * (kron(I(p), E') * v - b - C * x) - ones(p*m,1)); pa.s - kron(I(p), E) * x]))
@@ -46,7 +46,7 @@ function solve_entropy_routing(pa, λ)
 end
 
 
-game_name, g, p, E, s, x̂ = grid_graph3_4_players()
+game_name, g, p, E, E_diag, s_reduced, x̂ = grid_graph3_4_players_reduced()
 n, m = size(E)
 b = 0.1*ones(p*m)
 C = zeros(p*m, p*m)
@@ -54,11 +54,12 @@ C = zeros(p*m, p*m)
 function pa()
     pa_p = p
     pa_E = E
+    pa_E_diag = E_diag
     pa_n, pa_m = n, m
-    pa_s = s
+    pa_s_reduced = s_reduced
     pa_b = b
     pa_C = C
-    (; p=pa_p, E=pa_E, n=pa_n, m=pa_m, s=pa_s, b=pa_b, C=pa_C)
+    (; p=pa_p, E=pa_E, E_diag=pa_E_diag, n=pa_n, m=pa_m, s_reduced=pa_s_reduced, b=pa_b, C=pa_C)
 end
 
 x, v = solve_entropy_routing(pa(), 0.004)   # λ = 0.003 -> MathOptInterface.LOCALLY_INFEASIBLE

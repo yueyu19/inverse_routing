@@ -16,7 +16,8 @@ Returns:
 - x: mixed eq strategies for each player on space of links
 - v: value vector/function associated to all nodes
 """
-# function solve_entropy_routing(pa, λ, x_init, v_init)
+
+# function solve_entropy_routing(pa, λ)
 #     # println("calling solve_entropy_routing...")
 
 #     # R = 1/λ * (pa.p * pa.m * maximum(abs.(pa.C)) + maximum(pa.b))
@@ -28,13 +29,18 @@ Returns:
 #         # F[pa.p*pa.m+1:end] = pa.s - kron(I(pa.p), pa.E) * x
 
 #         for i in 1:pa.p*pa.m
-#             F[i] = xi[1:pa.p*pa.m][i] - exp(1/λ * ((kron(I(pa.p), pa.E') * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - ones(pa.p*pa.m,1)[i])
+#             # F[i] = xi[1:pa.p*pa.m][i] - exp(1/λ * ((kron(I(pa.p), pa.E') * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - ones(pa.p*pa.m,1)[i])
 #             # F[i] = exp(-R) * xi[1:pa.p*pa.m][i] - exp(1/λ * ((kron(I(pa.p), pa.E') * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - (R+1) * ones(pa.p*pa.m,1)[i])
 
+#             F[i] = xi[1:pa.p*pa.m][i] - exp(1/λ * ((pa.E_diag' * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - ones(pa.p*pa.m,1)[i])
+
 #         end
-#         for j in 1:pa.p*pa.n
-#             F[pa.p*pa.m+j] = pa.s[j] - (kron(I(pa.p), pa.E) * xi[1:pa.p*pa.m])[j]
+#         for j in 1:pa.p*(pa.n-1)
+#             # F[pa.p*pa.m+j] = pa.s[j] - (kron(I(pa.p), pa.E) * xi[1:pa.p*pa.m])[j]
 #             # F[pa.p*pa.m+j] = exp(-R) * (pa.s[j] - (kron(I(pa.p), pa.E) * xi[1:pa.p*pa.m])[j])
+
+#             F[pa.p*pa.m+j] = pa.s_reduced[j] - (pa.E_diag * xi[1:pa.p*pa.m])[j]
+
 #         end
 #     end
 
@@ -51,17 +57,15 @@ Returns:
 #     #     end
 #     # end
 
-#     # x0 = 0.5.*ones(pa.p*pa.m, 1)
-#     # v0 = 0.5.*ones(pa.p*pa.n, 1)
-#     # sol = nlsolve(nash!, [x0; v0], autodiff = :forward, show_trace=false, ftol=1e-8, iterations=2000)
-#     sol = nlsolve(nash!, [x_init; v_init], autodiff = :forward, method=:newton, show_trace=false, ftol=1e-3, iterations=1000)
-#     # sol = nlsolve(nash!, j!, [x0; v0], show_trace=true)
+#     x0 = 0.5.*ones(pa.p*pa.m, 1)
+#     v0 = 0.5.*ones(pa.p*(pa.n-1), 1)
+#     sol = nlsolve(nash!, [x0; v0], autodiff = :forward, show_trace=false, ftol=1e-8, iterations=1000)
 
 #     (;x = sol.zero[1:pa.p*pa.m],
 #       v = sol.zero[pa.p*pa.m+1:end])
 # end
 
-function solve_entropy_routing(pa, λ)
+function solve_entropy_routing(pa, λ, x_init, v_init)
     # println("calling solve_entropy_routing...")
 
     # R = 1/λ * (pa.p * pa.m * maximum(abs.(pa.C)) + maximum(pa.b))
@@ -73,13 +77,18 @@ function solve_entropy_routing(pa, λ)
         # F[pa.p*pa.m+1:end] = pa.s - kron(I(pa.p), pa.E) * x
 
         for i in 1:pa.p*pa.m
-            F[i] = xi[1:pa.p*pa.m][i] - exp(1/λ * ((kron(I(pa.p), pa.E') * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - ones(pa.p*pa.m,1)[i])
+            # F[i] = xi[1:pa.p*pa.m][i] - exp(1/λ * ((kron(I(pa.p), pa.E') * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - ones(pa.p*pa.m,1)[i])
             # F[i] = exp(-R) * xi[1:pa.p*pa.m][i] - exp(1/λ * ((kron(I(pa.p), pa.E') * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - (R+1) * ones(pa.p*pa.m,1)[i])
 
+            F[i] = xi[1:pa.p*pa.m][i] - exp(1/λ * ((pa.E_diag' * xi[pa.p*pa.m+1:end])[i] - pa.b[i] - (pa.C * xi[1:pa.p*pa.m])[i]) - ones(pa.p*pa.m,1)[i])
+
         end
-        for j in 1:pa.p*pa.n
-            F[pa.p*pa.m+j] = pa.s[j] - (kron(I(pa.p), pa.E) * xi[1:pa.p*pa.m])[j]
+        for j in 1:pa.p*(pa.n-1)
+            # F[pa.p*pa.m+j] = pa.s[j] - (kron(I(pa.p), pa.E) * xi[1:pa.p*pa.m])[j]
             # F[pa.p*pa.m+j] = exp(-R) * (pa.s[j] - (kron(I(pa.p), pa.E) * xi[1:pa.p*pa.m])[j])
+
+            F[pa.p*pa.m+j] = pa.s_reduced[j] - (pa.E_diag * xi[1:pa.p*pa.m])[j]
+
         end
     end
 
@@ -96,11 +105,9 @@ function solve_entropy_routing(pa, λ)
     #     end
     # end
 
-    x0 = 0.5.*ones(pa.p*pa.m, 1)
-    v0 = 0.5.*ones(pa.p*pa.n, 1)
-    sol = nlsolve(nash!, [x0; v0], autodiff = :forward, show_trace=false, ftol=1e-8, iterations=1000)
-    # sol = nlsolve(nash!, [x_init; v_init], autodiff = :forward, show_trace=false, ftol=1e-3, iterations=1000)
-    # sol = nlsolve(nash!, j!, [x0; v0], show_trace=true)
+    # x0 = 0.5.*ones(pa.p*pa.m, 1)
+    # v0 = 0.5.*ones(pa.p*(pa.n-1), 1)
+    sol = nlsolve(nash!, [x_init; v_init], autodiff = :forward, show_trace=false, ftol=1e-8, iterations=1000)
 
     (;x = sol.zero[1:pa.p*pa.m],
       v = sol.zero[pa.p*pa.m+1:end])

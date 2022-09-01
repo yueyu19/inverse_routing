@@ -1,5 +1,6 @@
 using Graphs, GraphRecipes
 using Plots, GraphPlot
+using BlockDiagonals
 
 # routing games
 function grid_graph3_4_players()
@@ -38,6 +39,51 @@ function grid_graph3_4_players()
 
     # plot_unlabeled(game_name, g, row_num)
     (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
+end
+
+function grid_graph3_4_players_reduced()
+    game_name = "grid_graph3_4_players_reduced"
+
+    row_num = 3
+    col_num = 3
+    g = SimpleDiGraph(row_num * col_num)
+    for i in 1:row_num
+        for j in 1:col_num-1
+        add_edge!(g, row_num*(i-1)+j, row_num*(i-1)+j+1)
+        add_edge!(g, row_num*(i-1)+j+1, row_num*(i-1)+j)
+        end
+    end
+    for j in 1:col_num
+        for i in 1:row_num-1
+            add_edge!(g, row_num*(i-1)+j, row_num*(i-1)+j+row_num)
+            add_edge!(g, row_num*(i-1)+j+row_num, row_num*(i-1)+j)
+        end
+    end
+
+    p = 4
+
+    E = -Matrix(incidence_matrix(g))
+    E1 = E[1:end .∉ [[6]], 1:end]
+    E2 = E[1:end .∉ [[4]], 1:end]
+    E3 = E[1:end .∉ [[8]], 1:end]
+    E4 = E[1:end .∉ [[2]], 1:end]
+    E_diag = BlockDiagonal([E1, E2, E3, E4])
+
+    s_p1 = zeros(9); s_p1[4] = 1; s_p1[6] = -1;
+    s_p2 = -s_p1
+    s_p3 = zeros(9); s_p3[2] = 1; s_p3[8] = -1;
+    s_p4 = -s_p3
+    s = [s_p1; s_p2; s_p3; s_p4]
+    s_reduced = filter!(i->i!=-1, s)
+
+    p1 = zeros(24); p1[8] = p1[1] = p1[4] = p1[7] = 1;
+    p2 = zeros(24); p2[17] = p2[24] = p2[21] = p2[18] = 1;
+    p3 = zeros(24); p3[4] = p3[7] = p3[17] = p3[24] = 1;
+    p4 = zeros(24); p4[21] = p4[18] = p4[8] = p4[1] = 1;
+    x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
+
+    # plot_unlabeled(game_name, g, row_num)
+    (;game_name=game_name, g=g, p=p, E=E, E_diag=E_diag, s_reduced=s_reduced, x̂=x̂)
 end
 
 function grid_graph5_2_players()

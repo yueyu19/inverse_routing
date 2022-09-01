@@ -27,7 +27,7 @@ function parse_commandline()
             default = 1e-3
         "--max_iter"
             help = "maximum iter allowed"
-            arg_type = Int32
+            arg_type = Int64
             default = 10
     end
 
@@ -36,14 +36,14 @@ end
 args = parse_commandline()
 
 
-function homotopy_exp_parameter_choice(p, E, s, x̂, λ_list, α, ϵ, ρ, max_iter)
+function homotopy_exp_parameter_choice(p, E, E_diag, s_reduced, x̂, λ_list, α, ϵ, ρ, max_iter)
     n, m = size(E)
 
     # output placeholder
     x = zeros(p*m)
     b = 0.1*ones(p*m)
     C = zeros(p*m, p*m)
-    v = zeros(p*n)
+    v = zeros(p*(n-1))
     
     ψ_vals_list = Float64[]
     violation_metrics_list = Float64[]
@@ -56,7 +56,7 @@ function homotopy_exp_parameter_choice(p, E, s, x̂, λ_list, α, ϵ, ρ, max_it
 
     for λ in λ_list
         println("λ=$λ, α=$α")
-        x, b, C, ψ_vals, violation_metrics, lambda_vals, v, ∇̂ψ_C_norm, D_norm, J_norm, pinv_J_norm, F_norm = approx_proj_grad(p, E, s, x̂, λ, α, ϵ, ρ, max_iter, x, b, C)
+        x, b, C, ψ_vals, violation_metrics, lambda_vals, v, ∇̂ψ_C_norm, D_norm, J_norm, pinv_J_norm, F_norm = approx_proj_grad(p, E, E_diag, s_reduced, x̂, λ, α, ϵ, ρ, max_iter, x, b, C)
         append!(ψ_vals_list, ψ_vals)
         append!(violation_metrics_list, violation_metrics)
         append!(lambda_vals_list, lambda_vals)
@@ -84,22 +84,20 @@ end
 
 """ RUNNING EXP: PARAMETER CHOICE """
 # instantiate a routing game (p, E, s) with desired Nash sol x̂
-game_name, g, p, E, s, x̂ = grid_graph3_4_players()
+game_name, g, p, E, E_diag, s_reduced, x̂ = grid_graph3_4_players_reduced()
+
 
 # assign parameters
-# λ = args["lambda"]
+λ = args["lambda"]
 α = args["alpha"]
 ϵ = args["epsilon"]
 ρ = args["rho"]
 max_iter = args["max_iter"]
-
-@show λ_list = [1.0/(2^i) for i in 5:10]
+@show λ_list = [1.0/(2^i) for i in 1:8]
 
 # calling method
 println("----------- $(game_name)_ρ=($ρ)_λ_list=($λ_list)_α=($α)_ϵ=($ϵ) -----------")
-x, b, C, ψ_vals_list, violation_metrics_list, lambda_vals_list, v, ∇̂ψ_C_norm_list, D_norm_list, J_norm_list, pinv_J_norm_list, F_norm_list = homotopy_exp_parameter_choice(p, E, s, x̂, λ_list, α, ϵ, ρ, max_iter)
-
-
+x, b, C, ψ_vals_list, violation_metrics_list, lambda_vals_list, v, ∇̂ψ_C_norm_list, D_norm_list, J_norm_list, pinv_J_norm_list, F_norm_list = homotopy_exp_parameter_choice(p, E, E_diag, s_reduced, x̂, λ_list, α, ϵ, ρ, max_iter)
 
 
 """ SAVING RESULT """
