@@ -126,6 +126,50 @@ function grid_graph5_2_players()
     (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
 end
 
+function grid_graph5_2_players_reduced()
+    game_name = "grid_graph5_2_players_reduced"
+
+    row_num = 5
+    col_num = 5
+    g = SimpleDiGraph(row_num * col_num)
+    for i in 1:row_num
+        for j in 1:col_num-1
+        add_edge!(g, 5*(i-1)+j, 5*(i-1)+j+1)
+        add_edge!(g, 5*(i-1)+j+1, 5*(i-1)+j)
+        end
+    end
+    for j in 1:col_num
+        for i in 1:row_num-1
+            add_edge!(g, 5*(i-1)+j, 5*(i-1)+j+5)
+            add_edge!(g, 5*(i-1)+j+5, 5*(i-1)+j)
+        end
+    end
+
+    p = 2
+    E = -Matrix(incidence_matrix(g))
+    E1 = E[1:end .∉ [[15]], 1:end]
+    E2 = E[1:end .∉ [[11]], 1:end]
+    E_diag = BlockDiagonal([E1, E2])
+
+    s_p1 = zeros(25); s_p1[11] = 1; s_p1[15] = -1;
+    s_p2 = -s_p1
+    # s_p3 = zeros(25); s_p3[3] = 1; s_p3[23] = -1;
+    # s_p4 = -s_p3
+    s = [s_p1; s_p2]
+    # s = [s_p1; s_p2; s_p3; s_p4]
+    s_reduced = filter!(i->i!=-1, s)
+    
+    p1 = zeros(80); p1[32] = p1[15] = p1[19] = p1[23] = p1[27] = p1[31] = 1;
+    p2 = zeros(80); p2[49] = p2[66] = p2[62] = p2[58] = p2[54] = p2[50] = 1;
+    # p3 = zeros(80); p3[7] = p3[11] = p3[28] = p3[46] = p3[64] = p3[77] = 1;
+    # p4 = zeros(80); p4[74] = p4[70] = p4[53] = p4[35] = p4[17] = p4[4] = 1;
+    x̂ = vec([p1; p2]) # dim: 24*2 x 1
+    # x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
+
+    # plot_unlabeled(game_name, g)
+    (;game_name=game_name, g=g, p=p, E=E, E_diag=E_diag, s_reduced=s_reduced, x̂=x̂)
+end
+
 function grid_graph5_4_players()
     game_name = "grid_graph5_4_players"
 
@@ -162,6 +206,50 @@ function grid_graph5_4_players()
 
     # plot_unlabeled(game_name, g)
     (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
+end
+
+function grid_graph5_4_players_reduced()
+    game_name = "grid_graph5_4_players_reduced"
+
+    row_num = 5
+    col_num = 5
+    g = SimpleDiGraph(row_num * col_num)
+    for i in 1:row_num
+        for j in 1:col_num-1
+        add_edge!(g, 5*(i-1)+j, 5*(i-1)+j+1)
+        add_edge!(g, 5*(i-1)+j+1, 5*(i-1)+j)
+        end
+    end
+    for j in 1:col_num
+        for i in 1:row_num-1
+            add_edge!(g, 5*(i-1)+j, 5*(i-1)+j+5)
+            add_edge!(g, 5*(i-1)+j+5, 5*(i-1)+j)
+        end
+    end
+
+    p = 4
+    E = -Matrix(incidence_matrix(g))
+    E1 = E[1:end .∉ [[15]], 1:end]
+    E2 = E[1:end .∉ [[11]], 1:end]
+    E3 = E[1:end .∉ [[23]], 1:end]
+    E4 = E[1:end .∉ [[3]], 1:end]
+    E_diag = BlockDiagonal([E1, E2, E3, E4])
+
+    s_p1 = zeros(25); s_p1[11] = 1; s_p1[15] = -1;
+    s_p2 = -s_p1
+    s_p3 = zeros(25); s_p3[3] = 1; s_p3[23] = -1;
+    s_p4 = -s_p3
+    s = [s_p1; s_p2; s_p3; s_p4]
+    s_reduced = filter!(i->i!=-1, s)
+
+    p1 = zeros(80); p1[32] = p1[15] = p1[19] = p1[23] = p1[27] = p1[31] = 1;
+    p2 = zeros(80); p2[49] = p2[66] = p2[62] = p2[58] = p2[54] = p2[50] = 1;
+    p3 = zeros(80); p3[7] = p3[11] = p3[28] = p3[46] = p3[64] = p3[77] = 1;
+    p4 = zeros(80); p4[74] = p4[70] = p4[53] = p4[35] = p4[17] = p4[4] = 1;
+    x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
+
+    # plot_unlabeled(game_name, g)
+    (;game_name=game_name, g=g, p=p, E=E, E_diag=E_diag, s_reduced=s_reduced, x̂=x̂)
 end
 
 # # helper function: plot unlabeled directed graph - GRID_GRAPH

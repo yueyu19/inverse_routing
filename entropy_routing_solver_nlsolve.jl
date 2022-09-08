@@ -1,5 +1,7 @@
 using LinearAlgebra
 using NLsolve
+using LineSearches
+include("routing_games.jl")
 
 """
 Compute entropy-regularized Nash mixed strategies by Newton's method
@@ -107,8 +109,30 @@ function solve_entropy_routing(pa, λ, x_init, v_init)
 
     # x0 = 0.5.*ones(pa.p*pa.m, 1)
     # v0 = 0.5.*ones(pa.p*(pa.n-1), 1)
-    sol = nlsolve(nash!, [x_init; v_init], autodiff = :forward, show_trace=false, ftol=1e-8, iterations=1000)
+    sol = nlsolve(nash!, [x_init; v_init], autodiff = :forward, show_trace=true, ftol=1e-3, iterations=1000, factor=0.1)
+    # sol = nlsolve(nash!, [x_init; v_init], autodiff = :forward, show_trace=true, ftol=1e-8, iterations=1000, method=:newton, linesearch=StrongWolfe())
 
     (;x = sol.zero[1:pa.p*pa.m],
       v = sol.zero[pa.p*pa.m+1:end])
 end
+
+game_name, g, p, E, E_diag, s_reduced, x̂ = grid_graph3_4_players_reduced()
+n, m = size(E)
+b = 0.1*ones(p*m)
+C = zeros(p*m, p*m)
+
+x_init = rand(p*m)
+v_init = zeros(p*(n-1))
+
+# create parameters block and solve for x
+function pa()
+    pa_p = p
+    pa_E = E
+    pa_E_diag = E_diag
+    pa_n, pa_m = n, m
+    pa_s_reduced = s_reduced
+    pa_b = b
+    pa_C = C
+    (; p=pa_p, E=pa_E, E_diag=pa_E_diag, n=pa_n, m=pa_m, s_reduced=pa_s_reduced, b=pa_b, C=pa_C)
+end
+x, v = solve_entropy_routing(pa(), 0.01, x_init, v_init)

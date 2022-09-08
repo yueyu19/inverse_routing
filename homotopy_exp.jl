@@ -45,47 +45,38 @@ function homotopy_exp_parameter_choice(p, E, E_diag, s_reduced, x̂, λ_list, α
     C = zeros(p*m, p*m)
     v = zeros(p*(n-1))
     
-    ψ_vals_list = Float64[]
-    violation_metrics_list = Float64[]
+    # ψ_vals_list = Float64[]
+    # violation_metrics_list = Float64[]
     lambda_vals_list = Float64[]
-    ∇̂ψ_C_norm_list = Float64[]
-    D_norm_list = Float64[]
-    J_norm_list = Float64[]
-    pinv_J_norm_list = Float64[]
-    F_norm_list = Float64[]
+    ψ_vals_exact_list = Float64[]
+
 
     for λ in λ_list
-        println("λ=$λ, α=$α")
-        x, b, C, ψ_vals, violation_metrics, lambda_vals, v, ∇̂ψ_C_norm, D_norm, J_norm, pinv_J_norm, F_norm = approx_proj_grad(p, E, E_diag, s_reduced, x̂, λ, α, ϵ, ρ, max_iter, x, b, C)
-        append!(ψ_vals_list, ψ_vals)
-        append!(violation_metrics_list, violation_metrics)
+        println("----- λ=$λ, α=$α -----")
+        # x, b, C, ψ_vals, violation_metrics, lambda_vals, v, ∇̂ψ_C_norm, D_norm, J_norm, pinv_J_norm, F_norm, ψ_vals_exact = approx_proj_grad(p, E, E_diag, s_reduced, x̂, λ, α, ϵ, ρ, max_iter, x, b, C)
+        x, v, b, C, lambda_vals, ψ_vals_exact = approx_proj_grad(p, E, E_diag, s_reduced, x̂, λ, α, ϵ, ρ, max_iter, x, b, C)
+        # append!(ψ_vals_list, ψ_vals)
+        # append!(violation_metrics_list, violation_metrics)
         append!(lambda_vals_list, lambda_vals)
-        append!(∇̂ψ_C_norm_list, ∇̂ψ_C_norm)
-        append!(D_norm_list, D_norm)
-        append!(J_norm_list, J_norm)
-        append!(pinv_J_norm_list, pinv_J_norm)
-        append!(F_norm_list, F_norm)
+        append!(ψ_vals_exact_list, ψ_vals_exact)
     end
     
     (;x = x,
+      v = v,
       b = b,
       C = C,
-      ψ_vals_list = ψ_vals_list,
-      violation_metrics_list = violation_metrics_list,
+    #   ψ_vals_list = ψ_vals_list,
+    #   violation_metrics_list = violation_metrics_list,
       lambda_vals_list = lambda_vals_list,
-      v = v,
-      ∇̂ψ_C_norm_list = ∇̂ψ_C_norm_list,
-      D_norm_list = D_norm_list,
-      J_norm_list = J_norm_list,
-      pinv_J_norm_list = pinv_J_norm_list,
-      F_norm_list = F_norm_list)
+      ψ_vals_exact_list = ψ_vals_exact_list)
 end
 
 
 """ RUNNING EXP: PARAMETER CHOICE """
 # instantiate a routing game (p, E, s) with desired Nash sol x̂
-game_name, g, p, E, E_diag, s_reduced, x̂ = grid_graph3_4_players_reduced()
-
+# game_name, g, p, E, E_diag, s_reduced, x̂ = grid_graph3_4_players_reduced()
+# game_name, g, p, E, E_diag, s_reduced, x̂ = grid_graph5_2_players_reduced()
+game_name, g, p, E, E_diag, s_reduced, x̂ = grid_graph5_4_players_reduced()
 
 # assign parameters
 λ = args["lambda"]
@@ -93,11 +84,14 @@ game_name, g, p, E, E_diag, s_reduced, x̂ = grid_graph3_4_players_reduced()
 ϵ = args["epsilon"]
 ρ = args["rho"]
 max_iter = args["max_iter"]
-@show λ_list = [1.0/(2^i) for i in 1:8]
+# @show λ_list = [1.0/(2^i) for i in 1:10]
+# @show λ_list = [0.002, 0.0016, 0.0015]
+# @show λ_list = [0.1, 0.05, 0.025, 0.0125, 0.005, 0.003, 0.002]
+@show λ_list = [0.01]
 
-# calling method
+# # calling method
 println("----------- $(game_name)_ρ=($ρ)_λ_list=($λ_list)_α=($α)_ϵ=($ϵ) -----------")
-x, b, C, ψ_vals_list, violation_metrics_list, lambda_vals_list, v, ∇̂ψ_C_norm_list, D_norm_list, J_norm_list, pinv_J_norm_list, F_norm_list = homotopy_exp_parameter_choice(p, E, E_diag, s_reduced, x̂, λ_list, α, ϵ, ρ, max_iter)
+x, v, b, C, lambda_vals_list, ψ_vals_exact_list = homotopy_exp_parameter_choice(p, E, E_diag, s_reduced, x̂, λ_list, α, ϵ, ρ, max_iter)
 
 
 """ SAVING RESULT """
@@ -107,27 +101,28 @@ mkpath(dir) # mkdir if not exists
 
 # save data to folder
 println("saving result to '$dir/$(game_name)_λ_list=($λ_list)_homotopy.jld2'")
-@save "$dir/$(game_name)_λ_list=($λ_list)_homotopy.jld2" ρ λ_list α ϵ max_iter lambda_vals_list ψ_vals_list violation_metrics_list v ∇̂ψ_C_norm_list D_norm_list J_norm_list pinv_J_norm_list F_norm_list
+@save "$dir/$(game_name)_λ_list=($λ_list)_homotopy.jld2" ρ λ_list α ϵ max_iter x v b C lambda_vals_list ψ_vals_exact_list
 println("--------------------------------")
 
 
-# @load "$dir/$(game_name)_λ_list=($λ_list)_homotopy.jld2" ρ λ_list α ϵ max_iter lambda_vals_list ψ_vals_list violation_metrics_list v ∇̂ψ_C_norm_list D_norm_list J_norm_list pinv_J_norm_list F_norm_list
+# @load "$dir/$(game_name)_λ_list=($λ_list)_homotopy.jld2" ρ λ_list α ϵ max_iter x v b C lambda_vals_list ψ_vals_exact_list
 
 # plot single axis (log-scaled)
-plot(lambda_vals_list, yscale=:log10, c=:green, label="λ", leg=:bottomleft, xlabel="iter", ylabel="log10 scaled")
-plot!(ψ_vals_list, yscale=:log10, c=:blue, linestyle=:dash, label="ψ(x)", leg=:bottomleft)
-plot!(violation_metrics_list, yscale=:log10, c=:red, linestyle=:dash, label="violation metric", leg=:bottomleft)
-hline!([1e-3], label="1e-3", c=:grey)
-plot!(title="ρ=($ρ), α=($α), ϵ=($ϵ) \n λ_list=($λ_list)")
-savefig("$dir/$(game_name)_λ_list=($λ_list)_homotopy.png")
-# savefig("homotopy.png")
+println("plotting homotopy...")
+plot(lambda_vals_list, yscale=:log10, c=:green, marker=:circle, label="λ", leg=:bottomleft, xlabel="iter", ylabel="log10 scaled")
+# plot!(ψ_vals_list, yscale=:log10, c=:blue, linestyle=:dash, label="ψ(x)", leg=:bottomleft)
+# plot!(violation_metrics_list, yscale=:log10, c=:red, linestyle=:dash, label="violation metric", leg=:bottomleft)
+plot!(ψ_vals_exact_list, yscale=:log10, c=:purple, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
+hline!([ϵ], label="ϵ=$ϵ", c=:grey)
+plot!(title="ρ=($ρ), α=($α) \n λ_list=($λ_list)")
+savefig("$dir/$(game_name)_λ_list=($λ_list)_homotopy_log.png")
+println("saved to '$dir/$(game_name)_λ_list=($λ_list)_homotopy_log.png'")
 
 
-plot(∇̂ψ_C_norm_list, label="∇̂ψ_C_norm_list", yscale=:log10, leg=:bottomleft)
-plot!(D_norm_list, label="D_norm_list", yscale=:log10)
-plot!(J_norm_list, label="J_norm_list", yscale=:log10)
-# plot!(pinv_J_norm_list, label="pinv_J_norm_list", yscale=:log10)
-plot(F_norm_list, label="F_norm_list", yscale=:log10)
-hline!([1e-3], label="1e-3", c=:grey)
-savefig("$dir/$(game_name)_λ_list=($λ_list)_helper_metrics.png")
-# savefig("helper_metrics.png")
+# plot single axis (linear-scaled)
+plot(lambda_vals_list, c=:green, marker=:circle, label="λ", leg=:bottomleft, xlabel="iter", ylabel="linear scaled")
+plot!(ψ_vals_exact_list, c=:purple, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
+hline!([ϵ], label="ϵ=$ϵ", c=:grey)
+plot!(title="ρ=($ρ), α=($α) \n λ_list=($λ_list)")
+savefig("$dir/$(game_name)_λ_list=($λ_list)_homotopy_linear.png")
+println("saved to '$dir/$(game_name)_λ_list=($λ_list)_homotopy_linear.png'")
