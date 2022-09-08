@@ -24,6 +24,7 @@ function grid_graph3_4_players()
 
     p = 4
     E = -Matrix(incidence_matrix(g))
+    n, m = size(E)
 
     s_p1 = zeros(9); s_p1[4] = 1; s_p1[6] = -1;
     s_p2 = -s_p1
@@ -38,7 +39,7 @@ function grid_graph3_4_players()
     x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
 
     # plot_unlabeled(game_name, g, row_num)
-    (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
+    (;game_name=game_name, g=g, p=p, E=E, n=n, m=m, s=s, x̂=x̂)
 end
 
 function grid_graph3_4_players_reduced()
@@ -62,13 +63,13 @@ function grid_graph3_4_players_reduced()
 
     p = 4
 
-    E = -Matrix(incidence_matrix(g))
+    E = -Matrix(incidence_matrix(g)); n, m = size(E)
     E1 = E[1:end .∉ [[6]], 1:end]
     E2 = E[1:end .∉ [[4]], 1:end]
     E3 = E[1:end .∉ [[8]], 1:end]
     E4 = E[1:end .∉ [[2]], 1:end]
     E_diag = BlockDiagonal([E1, E2, E3, E4])
-
+    
     s_p1 = zeros(9); s_p1[4] = 1; s_p1[6] = -1;
     s_p2 = -s_p1
     s_p3 = zeros(9); s_p3[2] = 1; s_p3[8] = -1;
@@ -83,7 +84,7 @@ function grid_graph3_4_players_reduced()
     x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
 
     # plot_unlabeled(game_name, g, row_num)
-    (;game_name=game_name, g=g, p=p, E=E, E_diag=E_diag, s_reduced=s_reduced, x̂=x̂)
+    (;game_name=game_name, g=g, p=p, E=E, n=n, m=m, E_diag=E_diag, s_reduced=s_reduced, x̂=x̂)
 end
 
 function grid_graph5_2_players()
@@ -106,7 +107,7 @@ function grid_graph5_2_players()
     end
 
     p = 2
-    E = -Matrix(incidence_matrix(g))
+    E = -Matrix(incidence_matrix(g)); n, m = size(E)
 
     s_p1 = zeros(25); s_p1[11] = 1; s_p1[15] = -1;
     s_p2 = -s_p1
@@ -123,7 +124,7 @@ function grid_graph5_2_players()
     # x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
 
     # plot_unlabeled(game_name, g)
-    (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
+    (;game_name=game_name, g=g, p=p, E=E, n=n, m=m, s=s, x̂=x̂)
 end
 
 function grid_graph5_2_players_reduced()
@@ -146,7 +147,7 @@ function grid_graph5_2_players_reduced()
     end
 
     p = 2
-    E = -Matrix(incidence_matrix(g))
+    E = -Matrix(incidence_matrix(g)); n, m = size(E)
     E1 = E[1:end .∉ [[15]], 1:end]
     E2 = E[1:end .∉ [[11]], 1:end]
     E_diag = BlockDiagonal([E1, E2])
@@ -167,7 +168,7 @@ function grid_graph5_2_players_reduced()
     # x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
 
     # plot_unlabeled(game_name, g)
-    (;game_name=game_name, g=g, p=p, E=E, E_diag=E_diag, s_reduced=s_reduced, x̂=x̂)
+    (;game_name=game_name, g=g, p=p, E=E, n=n, m=m, E_diag=E_diag, s_reduced=s_reduced, x̂=x̂)
 end
 
 function grid_graph5_4_players()
@@ -190,7 +191,7 @@ function grid_graph5_4_players()
     end
 
     p = 4
-    E = -Matrix(incidence_matrix(g))
+    E = -Matrix(incidence_matrix(g)); n, m = size(E)
 
     s_p1 = zeros(25); s_p1[11] = 1; s_p1[15] = -1;
     s_p2 = -s_p1
@@ -205,7 +206,7 @@ function grid_graph5_4_players()
     x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
 
     # plot_unlabeled(game_name, g)
-    (;game_name=game_name, g=g, p=p, E=E, s=s, x̂=x̂)
+    (;game_name=game_name, g=g, p=p, E=E, n=n, m=m, s=s, x̂=x̂)
 end
 
 function grid_graph5_4_players_reduced()
@@ -228,7 +229,7 @@ function grid_graph5_4_players_reduced()
     end
 
     p = 4
-    E = -Matrix(incidence_matrix(g))
+    E = -Matrix(incidence_matrix(g)); n, m = size(E)
     E1 = E[1:end .∉ [[15]], 1:end]
     E2 = E[1:end .∉ [[11]], 1:end]
     E3 = E[1:end .∉ [[23]], 1:end]
@@ -249,7 +250,7 @@ function grid_graph5_4_players_reduced()
     x̂ = vec([p1; p2; p3; p4]) # dim: 24*4 x 1
 
     # plot_unlabeled(game_name, g)
-    (;game_name=game_name, g=g, p=p, E=E, E_diag=E_diag, s_reduced=s_reduced, x̂=x̂)
+    (;game_name=game_name, g=g, p=p, E=E, n=n, m=m, E_diag=E_diag, s_reduced=s_reduced, x̂=x̂)
 end
 
 # # helper function: plot unlabeled directed graph - GRID_GRAPH
