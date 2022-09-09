@@ -2,7 +2,7 @@ include("approx_proj_gradient.jl")
 include("routing_games.jl")
 using ArgParse
 using JLD2
-using Plots, GraphPlot
+using Plots, GraphPlot, ColorSchemes
 
 # parse cmd args
 function parse_commandline()
@@ -51,7 +51,7 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
     v = zeros(pa.p*(pa.n-1))
     b = 0.1*ones(pa.p*pa.m)
     C = zeros(pa.p*pa.m, pa.p*pa.m)
-    lambda_vals_list = Float64[]
+    lambda_vals_list = Vector{Float64}[]
     ψ_vals_exact_list = Float64[]
     ψ_x_exact = Inf
 
@@ -64,7 +64,7 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
         else
             println("\t----- approx_proj_grad with {λ=$λ} -----\n")
             x, v, b, C, lambda_vals, ψ_vals_exact = approx_proj_grad(pa, λ, α, ϵ, ρ, max_iter, x, v, b, C)
-            append!(lambda_vals_list, lambda_vals)
+            push!(lambda_vals_list, lambda_vals)
             append!(ψ_vals_exact_list, ψ_vals_exact)
             ψ_x_exact = ψ_vals_exact_list[end]
         end
@@ -81,22 +81,32 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
     println("saved result to '$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy.jld2'")
     println("--------------------------------\n")
 
+    # @load "$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy.jld2" ρ λ_list α ϵ max_iter x v b C lambda_vals_list ψ_vals_exact_list
+
     # PLOTTING RESULT OR NOT
     if args["plot"] == true
         # plot single axis (log-scaled)
         println("plotting homotopy...")
-        plot(lambda_vals_list, yscale=:log10, c=:green, marker=:circle, label="λ", leg=:bottomleft, xlabel="iter", ylabel="log10 scaled")
-        plot!(ψ_vals_exact_list, yscale=:log10, c=:purple, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
+        plot(title="ρ=($ρ), α=($α) \n λ_list=($λ_list)")
+        lambda_vals_list_flattened = collect(Iterators.flatten(lambda_vals_list))
+        lambda_colors = palette([:green, :blue], length(lambda_vals_list))
+        for i in eachindex(lambda_vals_list)
+            lambda_vals = lambda_vals_list[i]
+            plot!(findall(x->x==lambda_vals[1], lambda_vals_list_flattened), lambda_vals, yscale=:log10, color = lambda_colors[i], marker=:circle, label="λ=$(lambda_vals[1])", leg=:bottomleft)
+        end 
+        plot!(ψ_vals_exact_list, yscale=:log10, c=:red, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
         hline!([ϵ], label="ϵ=$ϵ", c=:grey)
-        plot!(title="ρ=($ρ), α=($α) \n λ_list=($λ_list)")
         savefig("$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_log.png")
         println("saved to '$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_log.png'")
 
         # plot single axis (linear-scaled)
-        plot(lambda_vals_list, c=:green, marker=:circle, label="λ", leg=:bottomleft, xlabel="iter", ylabel="linear scaled")
-        plot!(ψ_vals_exact_list, c=:purple, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
+        plot(title="ρ=($ρ), α=($α) \n λ_list=($λ_list)")
+        for i in eachindex(lambda_vals_list)
+            lambda_vals = lambda_vals_list[i]
+            plot!(findall(x->x==lambda_vals[1], lambda_vals_list_flattened), lambda_vals, color = lambda_colors[i], marker=:circle, label="λ=$(lambda_vals[1])", leg=:bottomleft)
+        end        
+        plot!(ψ_vals_exact_list, c=:red, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
         hline!([ϵ], label="ϵ=$ϵ", c=:grey)
-        plot!(title="ρ=($ρ), α=($α) \n λ_list=($λ_list)")
         savefig("$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_linear.png")
         println("saved to '$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_linear.png'")
         println("--------------------------------\n")
@@ -117,10 +127,7 @@ end
 ϵ = args["epsilon"]
 ρ = args["rho"]
 max_iter = args["max_iter"]
-λ_list = [0.1, 0.01]
+λ_list = [1.0, 0.5, 0.1, 0.02]
 
 # calling method
 x, v, b, C, lambda_vals_list, ψ_vals_exact_list = homotopy_exp_parameter_choice(grid_graph3_4_players_reduced(), α, ϵ, ρ, max_iter, λ_list)
-
-
-# @load "$dir/$(grid_graph5_4_players_reduced().game_name)_λ_list=($λ_list)_homotopy.jld2" ρ λ_list α ϵ max_iter x v b C lambda_vals_list ψ_vals_exact_list
