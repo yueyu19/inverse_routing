@@ -87,27 +87,31 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
     if args["plot"] == true
         # plot single axis (log-scaled)
         println("plotting homotopy...")
-        plot(title="ρ=($ρ), α=($α) \n λ_list=($λ_list)")
+        plot(title="ρ=($ρ), α=($α), max_iter=($max_iter) \n λ_list=($λ_list)")
         lambda_vals_list_flattened = collect(Iterators.flatten(lambda_vals_list))
-        lambda_colors = palette([:green, :blue], length(lambda_vals_list))
+        if length(lambda_vals_list) <= 1
+            lambda_colors = [:green]
+        else
+            lambda_colors = palette([:green, :blue], length(lambda_vals_list))
+        end
         for i in eachindex(lambda_vals_list)
             lambda_vals = lambda_vals_list[i]
             plot!(findall(x->x==lambda_vals[1], lambda_vals_list_flattened), lambda_vals, yscale=:log10, color = lambda_colors[i], marker=:circle, label="λ=$(lambda_vals[1])", leg=:bottomleft)
         end 
         plot!(ψ_vals_exact_list, yscale=:log10, c=:red, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
         hline!([ϵ], label="ϵ=$ϵ", c=:grey)
-        savefig("$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_log.png")
+        savefig("$dir/$(pa.game_name)_homotopy_log.png")
         println("saved to '$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_log.png'")
 
         # plot single axis (linear-scaled)
-        plot(title="ρ=($ρ), α=($α) \n λ_list=($λ_list)")
+        plot(title="ρ=($ρ), α=($α), max_iter=($max_iter) \n λ_list=($λ_list)")
         for i in eachindex(lambda_vals_list)
             lambda_vals = lambda_vals_list[i]
             plot!(findall(x->x==lambda_vals[1], lambda_vals_list_flattened), lambda_vals, color = lambda_colors[i], marker=:circle, label="λ=$(lambda_vals[1])", leg=:bottomleft)
         end        
         plot!(ψ_vals_exact_list, c=:red, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
         hline!([ϵ], label="ϵ=$ϵ", c=:grey)
-        savefig("$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_linear.png")
+        savefig("$dir/$(pa.game_name)_homotopy_linear.png")
         println("saved to '$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_linear.png'")
         println("--------------------------------\n")
     end
@@ -127,7 +131,7 @@ end
 ϵ = args["epsilon"]
 ρ = args["rho"]
 max_iter = args["max_iter"]
-λ_list = [1.0, 0.5, 0.1, 0.02]
+λ_list = [1.0, 0.1, 0.01]
 
 # calling method
 x, v, b, C, lambda_vals_list, ψ_vals_exact_list = homotopy_exp_parameter_choice(grid_graph3_4_players_reduced(), α, ϵ, ρ, max_iter, λ_list)
