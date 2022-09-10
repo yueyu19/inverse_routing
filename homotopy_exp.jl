@@ -2,7 +2,7 @@ include("approx_proj_gradient.jl")
 include("routing_games.jl")
 using ArgParse
 using JLD2
-using Plots, GraphPlot, ColorSchemes
+using Plots, ColorSchemes
 
 # parse cmd args
 function parse_commandline()
