@@ -3,6 +3,7 @@ include("routing_games.jl")
 using ArgParse
 using JLD2
 using Plots, ColorSchemes
+using MAT
 
 # parse cmd args
 function parse_commandline()
@@ -28,7 +29,7 @@ function parse_commandline()
         "--max_iter"
             help = "maximum iter allowed"
             arg_type = Int64
-            default = 10
+            default = 5
         "--plot"
             help = "plot exp result or not"
             arg_type = Bool
@@ -37,6 +38,10 @@ function parse_commandline()
             help = "nlsolve or ipopt"
             arg_type = String
             default = "nlsolve"
+        "--mat"
+            help = "generate matlab output file"
+            arg_type = Bool
+            default = false
     end
 
     return parse_args(s)
@@ -83,7 +88,7 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
 
     # @load "$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy.jld2" ρ λ_list α ϵ max_iter x v b C lambda_vals_list ψ_vals_exact_list
 
-    # PLOTTING RESULT OR NOT
+    # plotting result on default
     if args["plot"] == true
         # plot single axis (log-scaled)
         println("plotting homotopy...")
@@ -116,6 +121,21 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
         println("--------------------------------\n")
     end
 
+    # generating matlab output file when requested
+    if args["mat"] == true
+        file = matopen("$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy.mat", "w")
+        write(file, "lambda_vals_list", lambda_vals_list)
+        write(file, "lambda_vals_list_flattened", collect(Iterators.flatten(lambda_vals_list)))
+        write(file, "psi_vals_exact_list", ψ_vals_exact_list)
+
+        # matwrite(file, Dict(
+        #     "lambda_vals_list" => lambda_vals_list,
+        #     "lambda_vals_list_flattened" => collect(Iterators.flatten(lambda_vals_list)),
+        #     "ψ_vals_exact_list" => ψ_vals_exact_list
+        # ); )
+        close(file)
+    end
+
     (;x = x,
       v = v,
       b = b,
@@ -131,7 +151,8 @@ end
 ϵ = args["epsilon"]
 ρ = args["rho"]
 max_iter = args["max_iter"]
-λ_list = [1.0, 0.1, 0.01]
+λ_list = [0.01]
 
 # calling method
-x, v, b, C, lambda_vals_list, ψ_vals_exact_list = homotopy_exp_parameter_choice(grid_graph3_4_players_reduced(), α, ϵ, ρ, max_iter, λ_list)
+x, v, b, C, lambda_vals_list, ψ_vals_exact_list = homotopy_exp_parameter_choice(grid_graph5_4_players_reduced(), α, ϵ, ρ, max_iter, λ_list)
+
