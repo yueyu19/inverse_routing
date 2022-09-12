@@ -48,9 +48,10 @@ You can set these command line arguments, with default values below:
   "lambda"         => 0.01
   "alpha"          => 0.005
   "epsilon"        => 0.001
-  "max_iter"       => 10
+  "max_iter"       => 5
   "plot"           => true
   "forward_solver" => "nlsolve"
+  "mat"            => false
 ```
 If you want to switch to the jump version of the forward solver, you can do
 ```
@@ -59,6 +60,10 @@ julia homotopy_exp.jl --forward_solver jump
 If you want to disable plotting, do
 ```
 julia homotopy_exp.jl --plot false
+```
+If you want to generate output in matlab format (.mat), do
+```
+julia homotopy_exp.jl --mat true
 ```
 
 ## Future
