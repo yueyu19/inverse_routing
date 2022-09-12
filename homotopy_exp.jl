@@ -42,6 +42,10 @@ function parse_commandline()
             help = "generate matlab output file"
             arg_type = Bool
             default = false
+        "--game"
+            help = "choose game instance"
+            arg_type = String
+            default = "grid_graph3_4_players_reduced"
     end
 
     return parse_args(s)
@@ -127,13 +131,12 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
         write(file, "lambda_vals_list", lambda_vals_list)
         write(file, "lambda_vals_list_flattened", collect(Iterators.flatten(lambda_vals_list)))
         write(file, "psi_vals_exact_list", ψ_vals_exact_list)
-
-        # matwrite(file, Dict(
-        #     "lambda_vals_list" => lambda_vals_list,
-        #     "lambda_vals_list_flattened" => collect(Iterators.flatten(lambda_vals_list)),
-        #     "ψ_vals_exact_list" => ψ_vals_exact_list
-        # ); )
+        write(file, "x", x)
+        write(file, "v", v)
+        write(file, "b", b)
+        write(file, "C", C)
         close(file)
+        println("saved result to '$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy.mat'")
     end
 
     (;x = x,
@@ -151,8 +154,16 @@ end
 ϵ = args["epsilon"]
 ρ = args["rho"]
 max_iter = args["max_iter"]
-λ_list = [0.01]
+λ_list = [1.0, 0.1, 0.01]
 
 # calling method
-x, v, b, C, lambda_vals_list, ψ_vals_exact_list = homotopy_exp_parameter_choice(grid_graph5_4_players_reduced(), α, ϵ, ρ, max_iter, λ_list)
+if args["game"] == "grid_graph3_4_players_reduced"
+    game = grid_graph3_4_players_reduced()
+elseif args["game"] == "grid_graph5_2_players_reduced"
+    game = grid_graph5_2_players_reduced()
+elseif args["game"] == "grid_graph5_4_players_reduced"
+    game = grid_graph5_4_players_reduced()
+end
+
+x, v, b, C, lambda_vals_list, ψ_vals_exact_list = homotopy_exp_parameter_choice(game, α, ϵ, ρ, max_iter, λ_list)
 
