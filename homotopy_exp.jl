@@ -29,7 +29,7 @@ function parse_commandline()
         "--max_iter"
             help = "maximum iter allowed"
             arg_type = Int64
-            default = 5
+            default = 10
         "--plot"
             help = "plot exp result or not"
             arg_type = Bool
@@ -45,7 +45,7 @@ function parse_commandline()
         "--game"
             help = "choose game instance"
             arg_type = String
-            default = "grid_graph3_4_players_reduced"
+            default = "grid_graph3_2_players_reduced"
     end
 
     return parse_args(s)
@@ -80,8 +80,8 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
     end
     println("--------------------------------\n")
 
-     # create an individual folder under homotopy_results/
-    dir = "homotopy_results/$(pa.game_name)"
+     # create an individual folder under results/
+    dir = "results/$(pa.game_name)"
     mkpath(dir) # mkdir if not exists
 
     # save data to folder
@@ -109,7 +109,7 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
         end 
         plot!(ψ_vals_exact_list, yscale=:log10, c=:red, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
         hline!([ϵ], label="ϵ=$ϵ", c=:grey)
-        savefig("$dir/$(pa.game_name)_homotopy_log.png")
+        savefig("$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_log.png")
         println("saved to '$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_log.png'")
 
         # plot single axis (linear-scaled)
@@ -120,7 +120,7 @@ function homotopy_exp_parameter_choice(pa, α, ϵ, ρ, max_iter, λ_list)
         end        
         plot!(ψ_vals_exact_list, c=:red, linestyle=:dash, label="ψ(x)_exact", leg=:bottomleft)
         hline!([ϵ], label="ϵ=$ϵ", c=:grey)
-        savefig("$dir/$(pa.game_name)_homotopy_linear.png")
+        savefig("$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_linear.png")
         println("saved to '$dir/$(pa.game_name)_λ_list=($λ_list)_homotopy_linear.png'")
         println("--------------------------------\n")
     end
@@ -154,13 +154,11 @@ end
 ϵ = args["epsilon"]
 ρ = args["rho"]
 max_iter = args["max_iter"]
-λ_list = [1.0, 0.1, 0.01]
+λ_list = [args["lambda"]]
 
 # calling method
-if args["game"] == "grid_graph3_4_players_reduced"
-    game = grid_graph3_4_players_reduced()
-elseif args["game"] == "grid_graph5_2_players_reduced"
-    game = grid_graph5_2_players_reduced()
+if args["game"] == "grid_graph3_2_players_reduced"
+    game = grid_graph3_2_players_reduced()
 elseif args["game"] == "grid_graph5_4_players_reduced"
     game = grid_graph5_4_players_reduced()
 end
