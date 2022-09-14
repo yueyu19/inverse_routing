@@ -7,7 +7,7 @@
 #### Dependencies
   - for solvers: LinearAlgebra, JuMP, Ipopt, NLsolve
   - for routing game instances: BlockDiagonals, Graphs, GraphRecipes
-  - for saving and plotting: JLD2, Plots, GraphPlot, ColorSchemes
+  - for saving and plotting: JLD2, Plots, GraphPlot, ColorSchemes, MAT
   - for command line args: ArgParse
 
 #### Code structure
@@ -48,10 +48,15 @@ You can set these command line arguments, with default values below:
   "lambda"         => 0.01
   "alpha"          => 0.005
   "epsilon"        => 0.001
-  "max_iter"       => 5
+  "max_iter"       => 10
   "plot"           => true
   "forward_solver" => "nlsolve"
   "mat"            => false
+  "game"           => "grid_graph3_2_players_reduced"
+```
+To run experiment on a different routing game (right now only supports the two define games in `routing_games.jl`), do the following,
+```
+julia homotopy_exp.jl --game "grid_graph5_4_players_reduced"
 ```
 If you want to switch to the jump version of the forward solver, you can do
 ```
